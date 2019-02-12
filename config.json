@@ -1,0 +1,18 @@
+{
+ "auth_front": "https://login.microsoftonline.com/",
+ "tenant_id": "X.onmicrosoft.com",
+ "auth_back": "/oauth2/v2.0/token",
+ "webapp_id": "X",
+ "scope_url": "https://vault.azure.net/.default",
+ "vault_url": "https://X.vault.azure.net",
+ "keyname": "X",
+ "keyversion": "X",
+ "apiversion": "7.0",
+ "node_addr": "http://127.0.0.1:8732",
+ "aad_token": "",
+ "keys": {
+  "tz3WaftwYXHatT1afD3XfAoaXcqKRuk2J4h9": {
+   "public_key": "p2pk67ZmuqaUEamAyJsMWKSFwaWeEEe2nU2bnSrQcbyrH1h7Ub7uVpt"
+  }
+ }
+}
