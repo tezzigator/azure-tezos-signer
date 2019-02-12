@@ -19,17 +19,21 @@ pip install -r requirements.txt
 ```
 
 ## Edit config.json with your credentials
-
+```
+tenant, urls, etc
+```
 ## Find your public key and pkh
 ```
 ./getpublickey.py
 ``
 
 ## Go back to config.json and put in the key info
+```
+public and pkh
+```
 
 ## Execution
 ```
-
 export WEBAPP_SECRET=blah
 FLASK_APP=signer flask run
 ```
