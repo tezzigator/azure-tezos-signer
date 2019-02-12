@@ -1,5 +1,5 @@
 # Tezos Remote Signer
-This is a Python Flask app that receives messages from the Tezos baking client and passes them on to an MS Azure CloudHSM to be signed. 
+This is a Python app that receives messages from the Tezos baking client and passes them on to an MS Azure CloudHSM to be signed. 
 
 ## DOUBLE BAKING WARNING
 Do not run this simultaneously on more than 1 baker.  True HA is not yet built into this branch.
