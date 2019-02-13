@@ -22,11 +22,11 @@ app = Flask(__name__)
 
 # sample config used for testing
 config = {
+    'keys': { 'tz3WaftwYXHatT1afD3XfAoaXcqKRuk2J4h9': { 'public_key': 'p2pk67ZmuqaUEamAyJsMWKSFwaWeEEe2nU2bnSrQcbyrH1h7Ub7uVpt' } },
     'kid_url = 'https://<keyvaultdomainhostname>.vault.azure.net/keys/<keyname>/<keyversion>',
     'token_url': 'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://vault.azure.net',
     'node_addr': 'http://127.0.0.1:8732',
-    'aad_token': '', # we will fetch this in a bit
-    'keys': { 'tz3WaftwYXHatT1afD3XfAoaXcqKRuk2J4h9': { 'public_key': 'p2pk67ZmuqaUEamAyJsMWKSFwaWeEEe2nU2bnSrQcbyrH1h7Ub7uVpt' } }
+    'aad_token': '' # we will fetch this in a bit
 }
 
 def get_token():
