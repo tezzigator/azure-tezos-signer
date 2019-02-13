@@ -18,10 +18,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Put in the key vault URL info in the getpublickey script
+## Put the key vault URL info in the getpublickey script
 ```
-Key vault kid (key identifier) URL - both scripts
-public and pkh key data - signer.py
+Key vault kid (key identifier) URL
 ```
 
 ## Find your public key and pkh
@@ -32,7 +31,7 @@ public and pkh key data - signer.py
 ## Put in the key info in the config section of the signer.py script
 ```
 Key vault kid (key identifier) URL
-public and pkh key data
+Both public and pkh key data
 ```
 
 ## Execution
