@@ -10,10 +10,6 @@
 
 # Starts the Tezos Remote Signer for Azure CloudHSM
 
-load_password() {
-	export WEBAPP_SECRET=''
-}
-
 start_remote_signer() {
 	echo "Starting remote signer..."
 	cd ~
