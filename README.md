@@ -5,7 +5,7 @@ This is a Python app that receives messages from the Tezos baking client and pas
 Do not run this simultaneously on more than 1 baker.  True HA is not yet built into this branch.
 
 ## Security Notes
-This should be considered a dev/prelim branch and is meant to be loaded directly onto a baker's OS system and includes variables to set for authorization, which is generally not a preferred mechanism for production purposes. Future branch will run completely HA in the cloud.  This for now simply returns the signature for valid payloads, after performing some checks:
+This should be considered a dev/prelim branch, no high water mark currently supported.  This branch runs on the local baker VM in Azure which should be set for system managed identity authorization to the key vault.  Also a good idea to enable the keyvault service endpoint on the subnet the VM is in.  Future branch will run with high water mark, and completely HA in the cloud.  This for now simply returns the signature for valid payloads, after performing some checks:
 * Is the message a valid payload?
 * THIS CODE WILL ALLOW HSM TO SIGN TRANSACTIONS.  This can easily be restricted.
 * Is the message within a certain threshold of the head of the chain? Ensures you are signing valid blocks.
