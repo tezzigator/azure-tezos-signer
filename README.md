@@ -39,9 +39,3 @@ public and pkh key data
 ```
 FLASK_APP=signer flask run
 ```
-
-## Running the tests
-```
-export WEBAPP_SECRET=blah
-python -m unittest test/test_remote_signer.py
-```
