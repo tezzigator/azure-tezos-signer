@@ -22,43 +22,24 @@ app = Flask(__name__)
 
 # sample config used for testing
 config = {
-    'auth_front': 'https://login.microsoftonline.com/',
-    'tenant_id': 'X',
-    'auth_back': '/oauth2/v2.0/token',
-    'webapp_id': 'X',
-    'scope_url': 'https://vault.azure.net/.default',
-    'vault_url': 'https://X.vault.azure.net',
-    'keyname': 'X',
-    'keyversion': 'X',
-    'apiversion': '7.0',    
+    'token_url': 'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fvault.azure.net',
+    'kid_url = 'https://<keyvaultdomainhostname>.vault.azure.net/keys/<keyname>/<keyversion>',
     'node_addr': 'http://127.0.0.1:8732',
-    'aad_token': '',
-    'token_expire': '',
+    'aad_token': '', # we will fetch this in a bit
     'keys': { 'tz3WaftwYXHatT1afD3XfAoaXcqKRuk2J4h9': { 'public_key': 'p2pk67ZmuqaUEamAyJsMWKSFwaWeEEe2nU2bnSrQcbyrH1h7Ub7uVpt' } }
 }
 
 def get_token():
     # get bearer auth token from AAD
-    logging.info('authing to fetch bearer token... ')
-    post_payload = {'client_id': config['webapp_id'], 'scope': config['scope_url'], 'client_secret': environ['WEBAPP_SECRET'], 'grant_type': 'client_credentials'}
-    post_headers = {'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json'}
-    response = post(config['auth_front'] + config['tenant_id'] + config['auth_back'], allow_redirects=False, headers=post_headers, data=post_payload)
-    config['aad_token'] = loads(response.text)['access_token']
-    config['token_expire'] = loads(response.text)['expires_in'] + round(time())
-    logging.info('current GMT time: ' + asctime(gmtime(time())) + ' token expires GMT:' +  asctime(gmtime(config['token_expire'])))
-    
-    
-logging.info('Opening config.json')
-if path.isfile('config.json'):
-    logging.info('Found config.json')
-    with open('config.json', 'r') as myfile:
-        json_blob = myfile.read().replace('\n', '')
-        logging.info('Parsed config.json successfully as JSON')
-        config = json.loads(json_blob)
-        logging.info('Config contains: {}'.format(json.dumps(config, indent=2)))
+    logging.info('fetching bearer token... ')
+    reqheaders = {'Metadata': 'true', 'Accept': 'application/json'}
+    response = get(config['token_url'], allow_redirects=False, headers=reqheaders)
+    logging.info('...got token')
+    return(loads(response.text)['access_token'])
 
-logging.info('loading initial token')
-get_token()
+logging.info('loading initial token...')
+config['aad_token'] = get_token()
+logging.info('...got token')
 
 
 @app.route('/keys/<key_hash>', methods=['POST'])
@@ -68,10 +49,8 @@ def sign(key_hash):
         data = request.get_json(force=True)
         if key_hash in config['keys']:
             logging.info('Found key_hash {} in config'.format(key_hash))
-            key = config['keys'][key_hash]            
-            if round(time()) + 10 > config['token_expire']:
-                logging.info('Token about to expire, fetching new one...')
-                get_token()
+            key = config['keys'][key_hash]
+            config['aad_token'] = get_token()
             logging.info('Attempting to sign {}'.format(data))
             rs = RemoteSigner(config, data)
             response = jsonify({
@@ -90,9 +69,6 @@ def sign(key_hash):
             mimetype='application/json'
         )
     logging.info('Returning flask response {}'.format(response))
-    if round(time()) + 120 > config['token_expire']:
-        logging.info('Token about to expire, fetching new one...')
-        get_token()
     return response
 
 
