@@ -22,7 +22,7 @@ app = Flask(__name__)
 
 # sample config used for testing
 config = {
-    'token_url': 'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fvault.azure.net',
+    'token_url': 'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://vault.azure.net',
     'kid_url = 'https://<keyvaultdomainhostname>.vault.azure.net/keys/<keyname>/<keyversion>',
     'node_addr': 'http://127.0.0.1:8732',
     'aad_token': '', # we will fetch this in a bit
