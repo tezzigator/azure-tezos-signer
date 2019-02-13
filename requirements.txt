@@ -2,4 +2,4 @@
 requests==2.20.0
 pyblake2==0.9.3
 flask==1.0.2
-base58
+base58==1.0.3
