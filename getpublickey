@@ -4,8 +4,6 @@
 # Written by Bo Byrd bo@tezzigator.com
 # Copyright (c) 2019 Tezzigator LLC
 # released under the MIT license
-# most of this was actually written by Carl/Luke Youngblood
-# of Blockscale, I just adapted it for MS Azure CloudHSM
 ###########################################################
 
 from base64 import urlsafe_b64decode, urlsafe_b64encode
@@ -18,7 +16,7 @@ charenc = 'utf-8'
 p2pk_magic =  bytes([3, 178, 139, 127])
 p2hash_magic = bytes([6, 161, 164])
 token_url = 'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://vault.azure.net'
-getkey_url = 'https://<keydomainhost>.vault.azure.net/keys/<keyname>/<keyversion>?api-version=7.0'
+kid_url = 'https://<keyvaultdomainhostname>.vault.azure.net/keys/<keyname>/<keyversion>'
 
 # get bearer auth token from AAD
 print('fetch bearer token... ', end='')
@@ -30,7 +28,7 @@ print('success')
 # get pubkey EC points
 print('fetching public key XY coordinates...')
 headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + aad_token}
-response = get(getkey_url, allow_redirects=False, headers=headers)
+response = get(kid_url + '?api-version=7.0', allow_redirects=False, headers=headers)
 x_coord = loads(response.text)['key']['x']
 y_coord = loads(response.text)['key']['y']
 print('x: ' + x_coord)
