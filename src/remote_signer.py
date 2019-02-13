@@ -90,7 +90,7 @@ class RemoteSigner:
             logging.info('Block format is valid')
             if self.is_block() or self.is_endorsement()  or self.is_generic():
                 logging.info('Preamble is valid')
-                if 1: #self.is_within_level_threshold():
+                if self.is_within_level_threshold():
                     logging.info('Block level is valid')
                     if test_mode:
                         return self.TEST_SIGNATURE
