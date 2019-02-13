@@ -50,7 +50,7 @@ class RemoteSigner:
 
     def is_endorsement(self):
         return list(self.data)[0] == self.ENDORSEMENT_PREAMBLE
-    
+
     def is_generic(self):
         return list(self.data)[0] == self.GENERIC_PREAMBLE
 
@@ -96,10 +96,10 @@ class RemoteSigner:
                         return self.TEST_SIGNATURE
                     else:
                         logging.info('About to sign with HSM client.')
-                        base64hash = urlsafe_b64encode(blake2b(unhexlify(data_to_sign), digest_size=32).digest()).decode('utf-8')                        
+                        base64hash = urlsafe_b64encode(blake2b(unhexlify(data_to_sign), digest_size=32).digest()).decode('utf-8')
                         post_payload = {'alg': 'ES256', 'value': base64hash}
-                        post_headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + config['aad_token']}
-                        response = post(config['vault_url'] + '/keys/' + config['keyname'] + '/' + config['keyversion'] + '/sign?api-version=' + config['apiversion'], allow_redirects=False, json=post_payload, headers=post_headers)
+                        post_headers = {'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': 'Bearer ' + config['aad_token']}
+                        response = post(config['kid_url'] + '/sign?api-version=7.0', allow_redirects=False, json=post_payload, headers=post_headers)
                         logging.info('Signer returns HTTP data:')
                         logging.info(response)
                         logging.info(response.headers)

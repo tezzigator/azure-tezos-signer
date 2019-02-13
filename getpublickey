@@ -4,57 +4,31 @@
 # Written by Bo Byrd bo@tezzigator.com
 # Copyright (c) 2019 Tezzigator LLC
 # released under the MIT license
-# most of this was actually written by Carl/Luke Youngblood
-# of Blockscale, I just adapted it for MS Azure CloudHSM
 ###########################################################
 
-from base64 import urlsafe_b64decode
+from base64 import urlsafe_b64decode, urlsafe_b64encode
 from hashlib import blake2b, sha256
 from base58 import b58encode
 from requests import post, get
-from json import loads
-from os import path, environ
 from json import loads
 
 charenc = 'utf-8'
 p2pk_magic =  bytes([3, 178, 139, 127])
 p2hash_magic = bytes([6, 161, 164])
-config = {
-    'auth_front': 'https://login.microsoftonline.com/',
-    'tenant_id': 'X',
-    'auth_back': '/oauth2/v2.0/token',
-    'webapp_id': 'X',
-    'scope_url': 'https://vault.azure.net/.default',
-    'vault_url': 'https://X.vault.azure.net',
-    'keyname': 'X',
-    'keyversion': 'X',
-    'apiversion': '7.0',    
-    'node_addr': 'http://127.0.0.1:8732',
-    'aad_token': '',
-    'token_expire': '',
-    'keys': { 'tz3WaftwYXHatT1afD3XfAoaXcqKRuk2J4h9': { 'public_key': 'p2pk67ZmuqaUEamAyJsMWKSFwaWeEEe2nU2bnSrQcbyrH1h7Ub7uVpt' } }
-}
-
-print('Opening config.json')
-if path.isfile('config.json'):
-    print('Found config.json')
-    with open('config.json', 'r') as myfile:
-        json_blob = myfile.read().replace('\n', '')
-        print('Parsed config.json successfully as JSON')
-        config = loads(json_blob)
+token_url = 'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://vault.azure.net'
+kid_url = 'https://<keyvaultdomainhostname>.vault.azure.net/keys/<keyname>/<keyversion>'
 
 # get bearer auth token from AAD
-print('authing to fetch bearer token... ', end='')
-post_payload = {'client_id': config['webapp_id'], 'scope': config['scope_url'], 'client_secret': environ['WEBAPP_SECRET'], 'grant_type': 'client_credentials'}
-post_headers = {'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json'}
-response = post(config['auth_front'] + config['tenant_id'] + config['auth_back'], allow_redirects=False, headers=post_headers, data=post_payload)
-config['aad_token'] = loads(response.text)['access_token']
+print('fetch bearer token... ', end='')
+headers = {'Metadata': 'true', 'Accept': 'application/json'}
+response = get(token_url, allow_redirects=False, headers=headers)
+aad_token = loads(response.text)['access_token']
 print('success')
 
 # get pubkey EC points
 print('fetching public key XY coordinates...')
-get_headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + config['aad_token']}
-response = get(config['vault_url'] + '/keys/' + config['keyname'] + '/' + config['keyversion'] + '?api-version=' + config['apiversion'], allow_redirects=False, headers=get_headers)
+headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + aad_token}
+response = get(kid_url + '?api-version=7.0', allow_redirects=False, headers=headers)
 x_coord = loads(response.text)['key']['x']
 y_coord = loads(response.text)['key']['y']
 print('x: ' + x_coord)
@@ -64,7 +38,7 @@ print('y: ' + y_coord)
 parity = bytes([2])
 if int.from_bytes(urlsafe_b64decode(y_coord + "=" * ((4 - len(y_coord) % 4) % 4)), 'big') % 2 == 1:
     parity = bytes([3])
- 
+
 # generate p256 public key
 pubkey = parity + urlsafe_b64decode(x_coord + "=" * ((4 - len(x_coord) % 4) % 4))
 
