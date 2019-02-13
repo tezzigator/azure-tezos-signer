@@ -18,9 +18,10 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Edit config.json with your credentials
+## Put in the key vault URL info in the getpublickey script
 ```
-tenant, urls, etc
+Key vault kid (key identifier) URL - both scripts
+public and pkh key data - signer.py
 ```
 
 ## Find your public key and pkh
@@ -28,14 +29,14 @@ tenant, urls, etc
 ./getpublickey.py
 ```
 
-## Go back to config.json and put in the key info
+## Put in the key info in the config section of the signer.py script
 ```
-public and pkh
+Key vault kid (key identifier) URL
+public and pkh key data
 ```
 
 ## Execution
 ```
-export WEBAPP_SECRET=blah
 FLASK_APP=signer flask run
 ```
 
