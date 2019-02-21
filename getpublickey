@@ -16,7 +16,7 @@ charenc = 'utf-8'
 p2pk_magic =  bytes([3, 178, 139, 127])
 p2hash_magic = bytes([6, 161, 164])
 token_url = 'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://vault.azure.net'
-kid_url = 'https://<keyvaultdomainhostname>.vault.azure.net/keys/<keyname>/<keyversion>'
+kid_url = 'https://X.vault.azure.net/keys/X'
 
 # get bearer auth token from AAD
 print('fetch bearer token... ', end='')
