@@ -2,7 +2,7 @@
 This is a Python app that receives messages from the Tezos baking client and passes them on to an MS Azure CloudHSM to be signed. 
 
 ## DOUBLE BAKING WARNING
-Do not run this simultaneously on more than 1 baker.  True HA is not yet built in.
+This branch has true high availabiltity as beta-test only.
 
 ## Security Notes
 This should be considered a dev/prelim branch, no high water mark currently supported.  This branch runs on the local baker VM in Azure which should be set for system managed identity authorization to the key vault.  Also a good idea to enable the keyvault service endpoint on the subnet the VM is in.  Future branch will run with high water mark, and completely HA in the cloud.  This for now simply returns the signature for valid payloads, after performing some checks:
@@ -36,5 +36,7 @@ Both public and pkh key data
 
 ## Execution
 ```
+Export TEZOSBAKERID environment variable to be the hostname of the baker you are running on.
+Obviously you must NEVER use the same name on different bakers as this is what prents doubles.
 FLASK_APP=signer flask run
 ```
