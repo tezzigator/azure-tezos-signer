@@ -1,6 +1,5 @@
 # Tezos Remote Signer
 This is a Python app that receives messages from the Tezos baking client and passes them on to an MS Azure CloudHSM to be signed. 
-
 ## DOUBLE BAKING WARNING
 This branch has true high availabiltity as beta-test only.
 
