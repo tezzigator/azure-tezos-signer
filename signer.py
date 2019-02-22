@@ -27,7 +27,7 @@ app = Flask(__name__)
 
 # sample config
 config = {
-    'kv_name_domain': 'tezzigator', # this name to be used both for the vault domain as well as keyname
+    'kv_name_domain': 'tezzigator', # this name to be used for the vault domain
     'node_addr': 'http://127.0.0.1:8732',
     'keys': {}, # to be auto-populated
     'cosmos_host': 'https://hsmbaking.documents.azure.com:443/',
