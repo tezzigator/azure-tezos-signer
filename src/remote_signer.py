@@ -25,13 +25,14 @@ class RemoteSigner:
     TEST_SIGNATURE = 'p2sigfqcE4b3NZwfmcoePgdFCvDgvUNa6DBp9h7SZ7wUE92cG3hQC76gfvistHBkFidj1Ymsi1ZcrNHrpEjPXQoQybAv6rRxke'
     P256_SIGNATURE = unpack('>L', b'\x36\xF0\x2C\x34')[0]  # results in p2sig prefix when encoded with base58
 
-    def __init__(self, kvclient, config, payload='', rpc_stub=None):
+    def __init__(self, kvclient, kv_keyname, config, payload='', rpc_stub=None):
         self.payload = payload
         info('Verifying payload')
         self.data = self.decode_block(self.payload)
         info('Payload {} is valid'.format(self.data))
         self.rpc_stub = rpc_stub
         self.kvclient = kvclient
+        self.kv_keyname = kv_keyname
         self.config = config
 
     @staticmethod
@@ -91,7 +92,7 @@ class RemoteSigner:
                     try:
                         op = blake2b(unhexlify(self.payload), digest_size=32).digest()
                         kvurl = 'https://' + self.config['kv_name_domain'] + '.vault.azure.net'
-                        sig = self.kvclient.sign(kvurl, self.config['kv_name_domain'], '', 'ES256', op).result
+                        sig = self.kvclient.sign(kvurl, self.kv_keyname, '', 'ES256', op).result
                         encoded_sig = RemoteSigner.b58encode_signature(sig)
                         info('Base58-encoded signature: {}'.format(encoded_sig) + ' writing DB row if bake or endorse')
 

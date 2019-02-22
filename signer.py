@@ -8,20 +8,20 @@
 # of Blockscale, I just adapted it for MS Azure CloudHSM
 ###########################################################
 
+from struct import unpack
 from flask import Flask, request, Response, json, jsonify
 from src.remote_signer import RemoteSigner
 from os import environ, sys
 from logging import warning, info, basicConfig, INFO, error
 from azure.keyvault import KeyVaultClient
 from msrestazure.azure_active_directory import MSIAuthentication
-from hashlib import sha256, blake2b
-from base58 import b58encode
+from hashlib import blake2b
+from bitcoin import bin_to_b58check
+
+P2PK_MAGIC = unpack('>L', b'\x03\xb2\x8b\x7f')[0]
+P2HASH_MAGIC = unpack('>L', b'\x00\x06\xa1\xa4')[0]
 
 basicConfig(filename='./remote-signer.log', format='%(asctime)s %(message)s', level=INFO)
-
-charenc = 'utf-8'
-p2pk_magic =  bytes([3, 178, 139, 127])
-p2hash_magic = bytes([6, 161, 164])
 
 app = Flask(__name__)
 
@@ -29,12 +29,12 @@ app = Flask(__name__)
 config = {
     'kv_name_domain': 'tezzigator', # this name to be used both for the vault domain as well as keyname
     'node_addr': 'http://127.0.0.1:8732',
-    'keys': { 'tz3WaftwYXHatT1afD3XfAoaXcqKRuk2J4h9': { 'public_key': 'p2pk67ZmuqaUEamAyJsMWKSFwaWeEEe2nU2bnSrQcbyrH1h7Ub7uVpt' } },
-    'cosmos_host': 'https://localhost:8081',
-    'cosmos_pkey': 'C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==',
+    'keys': {}, # to be auto-populated
+    'cosmos_host': 'https://hsmbaking.documents.azure.com:443/',
+    'cosmos_pkey': 'GmyPkYUiC0ldaKplwl5xRYBKZnyvAZAMYzNZmkB4yxVsrXfsBMhBuQ225YVbyEVYw6q4VHL6aycTqTOxKBMHtA==',
     'cosmos_db': 'hsmbaking',
     'cosmos_collection': 'signeditems',
-    'bakerid': environ['TEZOSBAKERID']
+    'bakerid': environ['TEZOSBAKERID'] # CRITICAL DOUBLE-BAKE WARNING: value must be unique per active baker
 }
 
 if 'TEZOSBAKERID' in environ: # CRITICAL that different baker machines have different IDs
@@ -42,7 +42,25 @@ if 'TEZOSBAKERID' in environ: # CRITICAL that different baker machines have diff
 else:
     print('envar TEZOSBAKERID not set!  exiting!')
     info('envar TEZOSBAKERID not set!  exiting!')
-    sys.exit(os.EX_NOTFOUND)
+    sys.exit(1)
+
+info('Fetching keys\' data from CloudHSM')
+kvclient = KeyVaultClient(MSIAuthentication(resource='https://vault.azure.net'))
+kvurl = 'https://' + config['kv_name_domain'] + '.vault.azure.net'
+keys = kvclient.get_keys(kvurl)
+for key in keys:
+    keyname = key.kid.split('/')
+    keydat = kvclient.get_key(kvurl, keyname[-1], '').key
+
+    parity = bytes([2])
+    if int.from_bytes(keydat.y, 'big') % 2 == 1:
+        parity = bytes([3])
+
+    public_key = bin_to_b58check(parity + keydat.x, magicbyte=P2PK_MAGIC)
+    genhash = blake2b(parity + keydat.x, digest_size=20).digest()
+    pkhash = bin_to_b58check(genhash, magicbyte=P2HASH_MAGIC)
+    config['keys'].update({pkhash:{'kv_keyname':keyname[-1],'public_key':public_key}})
+    info('retrieved key info: kevault keyname: ' + keyname[-1] + ' pkhash: ' + pkhash + ' - public_key: ' + public_key)
 
 @app.route('/keys/<key_hash>', methods=['POST'])
 def sign(key_hash):
@@ -52,9 +70,10 @@ def sign(key_hash):
         data = request.get_json(force=True)
         if key_hash in config['keys']:
             info('Found key_hash {} in config'.format(key_hash))
+            key = config['keys'][key_hash]
             kvclient = KeyVaultClient(MSIAuthentication(resource='https://vault.azure.net'))
             info('Calling remote-signer method {}'.format(data))
-            p2sig = RemoteSigner(kvclient, config, data).sign()
+            p2sig = RemoteSigner(kvclient, key['kv_keyname'], config, data).sign()
             response = jsonify({
                 'signature': p2sig
             })
@@ -86,9 +105,9 @@ def get_public_key(key_hash):
             response = jsonify({
                 'public_key': key['public_key']
             })
-            info('Found public key {} for key hash {}'.format(key['public_key'], key_hash))
+            info('Found key name {} - public_key {} for  hash {}'.format(key['kv_keyname'], key['public_key'], key_hash))
         else:
-            warning("Couldn't public key for key hash {}".format(key_hash))
+            warning("Couldn't find key info for pk_hash {}".format(key_hash))
             response = Response('Key not found', status=404)
     except Exception as e:
         data = {'error': str(e)}
@@ -109,42 +128,6 @@ def authorized_keys():
         status=200,
         mimetype='application/json'
     )
-
-@app.route('/getkey', methods=['GET'])
-def getkey():
-    kvclient = KeyVaultClient(MSIAuthentication(resource='https://vault.azure.net'))
-    kvurl = 'https://' + config['kv_name_domain'] + '.vault.azure.net'
-    keydat = kvclient.get_key(kvurl, config['kv_name_domain'], '').key
-
-    parity = bytes([2])
-    if int.from_bytes(keydat.y, 'big') % 2 == 1:
-        parity = bytes([3])
-
-    # generate p256 public key
-    pubkey = parity + keydat.x
-
-    # double hash the public key with the prefix
-    hash = sha256(sha256(p2pk_magic + pubkey).digest()).digest()[:4]
-
-    # generic blake2b hash for the shorter pkhash
-    genhash = blake2b(pubkey, digest_size=20).digest()
-
-    # double hash the genhash with the pkhash prefix
-    hashpkh = sha256(sha256(p2hash_magic + genhash).digest()).digest()[:4]
-
-    pkh = b58encode(p2hash_magic + genhash + hashpkh).decode(charenc)
-    pub = b58encode(p2pk_magic + pubkey + hash).decode(charenc)
-    info('Request to /getkeys - pkhash: ' + pkh + ' - pubkey: ' + pub)
-
-    return app.response_class(
-        response=json.dumps({
-            'pkhash': pkh,
-            'pubkey': pub
-        }),
-        status=200,
-        mimetype='application/json'
-    )
-
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5001, debug=True)
