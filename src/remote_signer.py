@@ -26,14 +26,13 @@ class RemoteSigner:
     P256_SIGNATURE = unpack('>L', b'\x36\xF0\x2C\x34')[0]  # results in p2sig prefix when encoded with base58
 
     def __init__(self, kvclient, config, payload='', rpc_stub=None):
-        self.keys = config['keys']
         self.payload = payload
         info('Verifying payload')
         self.data = self.decode_block(self.payload)
         info('Payload {} is valid'.format(self.data))
         self.rpc_stub = rpc_stub
-        self.node_addr = config['node_addr']
         self.kvclient = kvclient
+        self.config = config
 
     @staticmethod
     def valid_block_format(blockdata):
@@ -63,7 +62,7 @@ class RemoteSigner:
         return level
 
     def is_within_level_threshold(self):
-        rpc = self.rpc_stub or TezosRPCClient(node_url=self.node_addr)
+        rpc = self.rpc_stub or TezosRPCClient(node_url=self.config['node_addr'])
         current_level = rpc.get_current_level()
         payload_level = self.get_block_level()
         if self.is_block():
@@ -82,26 +81,23 @@ class RemoteSigner:
 
     def sign(self, test_mode=False):
         encoded_sig = ''
-        data_to_sign = self.payload
-        myconf = self.config
-        kv_client = self.kvclient
         info('sign() function in remote_signer now has its data to sign')
-        if self.valid_block_format(data_to_sign):
+        if self.valid_block_format(self.payload):
             info('Block format is valid')
             if self.is_block() or self.is_endorsement() or self.is_generic():  # here is where to restrict transactions
                 info('Preamble is valid.')
                 if ((self.is_block() or self.is_endorsement()) and self.is_within_level_threshold()) or (not self.is_block() and not self.is_endorsement()):
                     info('The request is valid.. getting signature')
                     try:
-                        op = blake2b(unhexlify(data_to_sign), digest_size=32).digest()
-                        kvurl = 'https://' + myconf['kv_name_domain'] + '.vault.azure.net'
-                        sig = kv_client.sign(kvurl, myconf['kv_name_domain'], '', 'ES256', op).result
+                        op = blake2b(unhexlify(self.payload), digest_size=32).digest()
+                        kvurl = 'https://' + self.config['kv_name_domain'] + '.vault.azure.net'
+                        sig = self.kvclient.sign(kvurl, self.config['kv_name_domain'], '', 'ES256', op).result
                         encoded_sig = RemoteSigner.b58encode_signature(sig)
                         info('Base58-encoded signature: {}'.format(encoded_sig) + ' writing DB row if bake or endorse')
 
                         if self.is_block() or self.is_endorsement():
-                            dbclient = cosmos_client.CosmosClient(url_connection=myconf['cosmos_host'], auth={'masterKey': myconf['cosmos_pkey']})
-                            collection_link = 'dbs/' + myconf['cosmos_db'] + ('/colls/' + myconf['cosmos_collection']).format(id)
+                            dbclient = cosmos_client.CosmosClient(url_connection=self.config['cosmos_host'], auth={'masterKey': self.config['cosmos_pkey']})
+                            collection_link = 'dbs/' + self.config['cosmos_db'] + ('/colls/' + self.config['cosmos_collection']).format(id)
                             container = dbclient.ReadContainer(collection_link)
                             # CRITICAL to have the CosmosDB set up with STRONG consistency as default model
                             # One of the next 2 (the block or endorse if/else) will be entered into the DB, if fails, then
@@ -110,14 +106,14 @@ class RemoteSigner:
                                 dbclient.CreateItem(container['_self'], {
                                     'itemtype': 'block', #CRITICAL - this string 'itemtype' VERBATIM should be set as partition key in the CosmosDB SQL table
                                     'blocklevel': self.get_block_level(), # critical this set as unique key in the CosmosDB table
-                                    'baker': myconf['bakerid'],
+                                    'baker': self.config['bakerid'],
                                     'sig': encoded_sig
                                 })
                             else:
                                 dbclient.CreateItem(container['_self'], {
                                     'itemtype': 'endorse', #CRITICAL - this string 'itemtype' VERBATIM should be set as partition key in the CosmosDB SQL table
                                     'blocklevel': self.get_block_level(), # critical this set as unique key in the CosmosDB table
-                                    'baker': myconf['bakerid'],
+                                    'baker': self.config['bakerid'],
                                     'sig': encoded_sig
                                 })
                     except:

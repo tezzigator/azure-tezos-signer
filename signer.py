@@ -10,7 +10,7 @@
 
 from flask import Flask, request, Response, json, jsonify
 from src.remote_signer import RemoteSigner
-from os import environ
+from os import environ, sys
 from logging import warning, info, basicConfig, INFO, error
 from azure.keyvault import KeyVaultClient
 from msrestazure.azure_active_directory import MSIAuthentication
@@ -27,12 +27,12 @@ app = Flask(__name__)
 
 # sample config
 config = {
-    'kv_name_domain': 'tezzigator',
+    'kv_name_domain': 'tezzigator', # this name to be used both for the vault domain as well as keyname
     'node_addr': 'http://127.0.0.1:8732',
     'keys': { 'tz3WaftwYXHatT1afD3XfAoaXcqKRuk2J4h9': { 'public_key': 'p2pk67ZmuqaUEamAyJsMWKSFwaWeEEe2nU2bnSrQcbyrH1h7Ub7uVpt' } },
     'cosmos_host': 'https://localhost:8081',
     'cosmos_pkey': 'C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==',
-    'cosmos_db': 'signeditems',
+    'cosmos_db': 'hsmbaking',
     'cosmos_collection': 'signeditems',
     'bakerid': environ['TEZOSBAKERID']
 }
@@ -132,11 +132,15 @@ def getkey():
     # double hash the genhash with the pkhash prefix
     hashpkh = sha256(sha256(p2hash_magic + genhash).digest()).digest()[:4]
 
-    info('pubkey: ' + b58encode(p2pk_magic + pubkey + hash).decode(charenc) + '\npkhash: ' + b58encode(
-        p2hash_magic + genhash + hashpkh).decode(charenc))
+    pkh = b58encode(p2hash_magic + genhash + hashpkh).decode(charenc)
+    pub = b58encode(p2pk_magic + pubkey + hash).decode(charenc)
+    info('Request to /getkeys - pkhash: ' + pkh + ' - pubkey: ' + pub)
 
     return app.response_class(
-        response=json.dumps({}),
+        response=json.dumps({
+            'pkhash': pkh,
+            'pubkey': pub
+        }),
         status=200,
         mimetype='application/json'
     )
