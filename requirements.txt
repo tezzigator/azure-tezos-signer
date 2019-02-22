@@ -1,6 +1,8 @@
--e git+https://github.com/vbuterin/pybitcointools.git@aeb0a2bbb8bbfe421432d776c649650eaeb882a5#egg=bitcoin
 requests==2.20.0
 pyblake2==0.9.3
 flask==1.0.2
 base58==1.0.3
 azure_cosmos==3.0.2
+azure_keyvault=1.1.0
+msrestazure==0.6.0
+-e git+https://github.com/vbuterin/pybitcointools.git@aeb0a2bbb8bbfe421432d776c649650eaeb882a5#egg=bitcoin

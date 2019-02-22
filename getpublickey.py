@@ -10,7 +10,7 @@ from base64 import urlsafe_b64decode, urlsafe_b64encode
 from hashlib import blake2b, sha256
 from base58 import b58encode
 from requests import post, get
-from json import loads
+from json import loadsimport
 
 charenc = 'utf-8'
 p2pk_magic =  bytes([3, 178, 139, 127])
