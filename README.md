@@ -1,5 +1,5 @@
 # Tezos Remote Signer
-This is a Python app that receives remote-signer protocol-formatted messages from the Tezos baking client and passes them on to an MS Azure CloudHSM to be signed.  This script will autodetect all signing keys in your keyvault and will allow for signing from clients by all keys.
+This is a Python app that receives remote-signer protocol formatted messages from the Tezos baking client and passes them on to an MS Azure CloudHSM to be signed.  This script will autodetect all signing keys in your keyvault and will allow for signing from clients by all keys.
 
 ## Azure Resources
 This code must run on a VM in Azure, with a system-assigned managed identity which has permissions to the Keyvault.
