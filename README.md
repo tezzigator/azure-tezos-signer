@@ -11,7 +11,7 @@ For the CosmosDB collection you MUST use '/blocklevel' as the unique key (no quo
 ## DOUBLE BAKING WARNING
 This branch has true high availabiltity as beta-test only.
 MUST USE STRONG CONSISTENCY in CosmosDB noSQL database
-MUST USE UNIQUE ENVIRONMENT VARIABLES 'TEZOSBAKERIR' ON EACH RUNNING BAKER
+MUST USE UNIQUE ENVIRONMENT VARIABLES 'TEZOSBAKERID' ON EACH RUNNING BAKER
 
 ## Security Notes
 This for now simply returns the signature for valid payloads, after performing some checks:
