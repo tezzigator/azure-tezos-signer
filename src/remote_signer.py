@@ -85,7 +85,7 @@ class RemoteSigner:
         info('sign() function in remote_signer now has its data to sign')
         if self.valid_block_format(self.payload):
             info('Block format is valid')
-            if self.is_block() or self.is_endorsement() or self.is_generic():  # here is where to restrict transactions
+            if not self.is_generic() or self.is_generic(): # to restrict transactions, just remove the or part
                 info('Preamble is valid.')
                 if ((self.is_block() or self.is_endorsement()) and self.is_within_level_threshold()) or (not self.is_block() and not self.is_endorsement()):
                     info('The request is valid.. getting signature')
