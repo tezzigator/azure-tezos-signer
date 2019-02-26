@@ -97,7 +97,7 @@ class RemoteSigner:
                         info('Base58-encoded signature: {}'.format(encoded_sig) + ' writing DB row if bake or endorse')
 
                         if self.is_block() or self.is_endorsement():
-                            dbclient = cosmos_client.CosmosClient(url_connection=self.config['cosmos_host'], auth={'masterKey': self.config['cosmos_pkey']})
+                            dbclient = cosmos_client.CosmosClient(url_connection=self.config['cosmos_host'], auth={'masterKey': self.config['cosmos_pkey']}, consistency_level='Strong') # just in case you forgot to set trong consistency when you created the db/collection
                             collection_link = 'dbs/' + self.config['cosmos_db'] + ('/colls/' + self.config['cosmos_collection']).format(id)
                             container = dbclient.ReadContainer(collection_link)
                             # CRITICAL to have the CosmosDB set up with STRONG consistency as default model
