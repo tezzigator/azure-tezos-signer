@@ -16,6 +16,7 @@ from bitcoin import bin_to_b58check
 from hashlib import blake2b
 from logging import info, error
 import azure.cosmos.cosmos_client as cosmos_client
+import traceback, sys
 
 class RemoteSigner:
     BLOCK_PREAMBLE = 1
@@ -85,8 +86,8 @@ class RemoteSigner:
         info('sign() function in remote_signer now has its data to sign')
         if self.valid_block_format(self.payload):
             info('Block format is valid')
-            if not self.is_generic() or self.is_generic(): # to restrict transactions, just remove the or part
-                info('Preamble is valid.  level is ' + blocklevel)
+            if not self.is_generic() or self.is_generic():  # to restrict transactions, just remove the or part
+                info('Preamble is valid.  level is ' + str(blocklevel))
                 if ((self.is_block() or self.is_endorsement()) and self.is_within_level_threshold()) or (not self.is_block() and not self.is_endorsement()):
                     info('The request is valid.. getting signature')
                     try:
@@ -110,14 +111,14 @@ class RemoteSigner:
                             dbclient.CreateItem(container['_self'], {'id': itemtype + str(blocklevel), 'itemtype': itemtype, 'blocklevel': blocklevel, 'baker': self.config['bakerid'], 'sig': encoded_sig})
 
                             # now read the table to check to prevent double
-                            query = {'query': 'select c.baker from c where c.itemtype = ' + itemtype + ' and c.blocklevel = ' + blocklevel}
-                            bakerrows = dbclient.QueryItems(collection_link['_self'], query, {'maxItemCount': 1, 'enableCrossPartitionQuery': False, 'consistencyLevel': 'Strong'})
+                            query = {'query': 'select c.baker from c where c.itemtype = \'' + itemtype + '\' and c.blocklevel = ' + str(blocklevel)}
+                            bakerrows = dbclient.QueryItems(container['_self'], query, {'maxItemCount': 1, 'enableCrossPartitionQuery': False, 'consistencyLevel': 'Strong'})
                             for bakerrow in iter(bakerrows):
                                 if bakerrow['baker'] != self.config['bakerid']:
                                     error('Another baker baked first')
                                     raise Exception('Another baker baked first')
                     except:
-                        error('CosmosDB issue, a HSM issue.')
+                        error('Error - CosmosDB issue, a HSM issue.')
                         encoded_sig = 'p2sig'
 
                 else:
