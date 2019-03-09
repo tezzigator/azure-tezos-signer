@@ -16,7 +16,6 @@ from bitcoin import bin_to_b58check
 from hashlib import blake2b
 from logging import info, error
 import azure.cosmos.cosmos_client as cosmos_client
-import traceback, sys
 
 class RemoteSigner:
     BLOCK_PREAMBLE = 1

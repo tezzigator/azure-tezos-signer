@@ -17,6 +17,7 @@ from msrestazure.azure_active_directory import MSIAuthentication
 from hashlib import blake2b
 from bitcoin import bin_to_b58check
 from uuid import uuid4
+import socket
 
 P2PK_MAGIC = unpack('>L', b'\x03\xb2\x8b\x7f')[0]
 P2HASH_MAGIC = unpack('>L', b'\x00\x06\xa1\xa4')[0]
@@ -34,7 +35,7 @@ config = {
     'cosmos_key': '',  # to be auto-populated
     'cosmos_db': 'tezzigator',
     'cosmos_collection': 'signeditems',
-    'bakerid': 'dev1_' + str(uuid4())
+    'bakerid': socket.getfqdn() + '_' + str(uuid4())
 }
 
 # If you ever change the keys or secret info from the KV, then you must restart this entire python
