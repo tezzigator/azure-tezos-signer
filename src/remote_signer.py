@@ -59,7 +59,6 @@ class RemoteSigner:
         else:
             hex_level = self.payload[-8:]
         level = unpack('>L', unhexlify(hex_level))[0]
-        info('Block level is {}'.format(level))
         return level
 
     def is_within_level_threshold(self):
@@ -82,11 +81,12 @@ class RemoteSigner:
 
     def sign(self, test_mode=False):
         encoded_sig = ''
+        blocklevel = self.get_block_level()
         info('sign() function in remote_signer now has its data to sign')
         if self.valid_block_format(self.payload):
             info('Block format is valid')
             if not self.is_generic() or self.is_generic(): # to restrict transactions, just remove the or part
-                info('Preamble is valid.')
+                info('Preamble is valid.  level is ' + blocklevel)
                 if ((self.is_block() or self.is_endorsement()) and self.is_within_level_threshold()) or (not self.is_block() and not self.is_endorsement()):
                     info('The request is valid.. getting signature')
                     try:
@@ -97,28 +97,27 @@ class RemoteSigner:
                         info('Base58-encoded signature: {}'.format(encoded_sig) + ' writing DB row if bake or endorse')
 
                         if self.is_block() or self.is_endorsement():
-                            dbclient = cosmos_client.CosmosClient(url_connection=self.config['cosmos_host'], auth={'masterKey': self.config['cosmos_pkey']}, consistency_level='Strong') # just in case you forgot to set trong consistency when you created the db/collection
+                            #first write the db table
+                            dbclient = cosmos_client.CosmosClient(url_connection=self.config['cosmos_host'], auth={'masterKey': self.config['cosmos_key']}, consistency_level='Strong')
                             collection_link = 'dbs/' + self.config['cosmos_db'] + ('/colls/' + self.config['cosmos_collection']).format(id)
                             container = dbclient.ReadContainer(collection_link)
-                            # CRITICAL to have the CosmosDB set up with STRONG consistency as default model
-                            # One of the next 2 (the block or endorse if/else) will be entered into the DB, if fails, then
-                            # it means another baker already wrote the row.
+                            itemtype = ''
                             if self.is_block():
-                                dbclient.CreateItem(container['_self'], {
-                                    'itemtype': 'block', #CRITICAL - this string 'itemtype' VERBATIM should be set as partition key in the CosmosDB SQL table
-                                    'blocklevel': self.get_block_level(), # critical this set as unique key in the CosmosDB table
-                                    'baker': self.config['bakerid'],
-                                    'sig': encoded_sig
-                                })
+                                itemtype = 'block'
                             else:
-                                dbclient.CreateItem(container['_self'], {
-                                    'itemtype': 'endorse', #CRITICAL - this string 'itemtype' VERBATIM should be set as partition key in the CosmosDB SQL table
-                                    'blocklevel': self.get_block_level(), # critical this set as unique key in the CosmosDB table
-                                    'baker': self.config['bakerid'],
-                                    'sig': encoded_sig
-                                })
+                                itemtype = 'endorse'
+                            # CRITICAL  "/itemtype" VERBATIM should be set as partition key in the CosmosDB SQL table, as we will have 2 partitions: /block and /endorse, and the unique key is "/blocklevel"
+                            dbclient.CreateItem(container['_self'], {'id': itemtype + str(blocklevel), 'itemtype': itemtype, 'blocklevel': blocklevel, 'baker': self.config['bakerid'], 'sig': encoded_sig})
+
+                            # now read the table to check to prevent double
+                            query = {'query': 'select c.baker from c where c.itemtype = ' + itemtype + ' and c.blocklevel = ' + blocklevel}
+                            bakerrows = dbclient.QueryItems(collection_link['_self'], query, {'maxItemCount': 1, 'enableCrossPartitionQuery': False, 'consistencyLevel': 'Strong'})
+                            for bakerrow in iter(bakerrows):
+                                if bakerrow['baker'] != self.config['bakerid']:
+                                    error('Another baker baked first')
+                                    raise Exception('Another baker baked first')
                     except:
-                        info('could not lock level, another baker must have taken it.  OR if not CosmosDB issue, a HSM issue.')
+                        error('CosmosDB issue, a HSM issue.')
                         encoded_sig = 'p2sig'
 
                 else:

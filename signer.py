@@ -11,12 +11,12 @@
 from struct import unpack
 from flask import Flask, request, Response, json, jsonify
 from src.remote_signer import RemoteSigner
-from os import environ, sys
 from logging import warning, info, basicConfig, INFO, error
 from azure.keyvault import KeyVaultClient
 from msrestazure.azure_active_directory import MSIAuthentication
 from hashlib import blake2b
 from bitcoin import bin_to_b58check
+from uuid import uuid4
 
 P2PK_MAGIC = unpack('>L', b'\x03\xb2\x8b\x7f')[0]
 P2HASH_MAGIC = unpack('>L', b'\x00\x06\xa1\xa4')[0]
@@ -26,26 +26,26 @@ basicConfig(filename='./remote-signer.log', format='%(asctime)s %(message)s', le
 app = Flask(__name__)
 
 config = {
-    'kv_name_domain': 'tezzigator', # this name to be used for the vault domain
+    'kv_name_domain': 'tezzigator',  # this name to be used for the vault domain
     'node_addr': 'http://127.0.0.1:8732',
-    'keys': {}, # to be auto-populated
-    'cosmos_host': 'https://hsmbaking.documents.azure.com:443/',
-    'cosmos_pkey': 'GmyPkYUiC0ldaKplwl5xRYBKZnyvAZAMYzNZmkB4yxVsrXfsBMhBuQ225YVbyEVYw6q4VHL6aycTqTOxKBMHtA==',
-    'cosmos_db': 'hsmbaking',
+    'keys': {},  # to be auto-populated
+    'cosmos_host': 'https://tezzigator.documents.azure.com:443/',
+    'kvsecretname': 'cloudnosql',  # the name of the KV secret that stores the CosmosDB passkey
+    'cosmos_key': '',  # to be auto-populated
+    'cosmos_db': 'tezzigator',
     'cosmos_collection': 'signeditems',
-    'bakerid': environ['TEZOSBAKERID'] # CRITICAL DOUBLE-BAKE WARNING: value must be unique per active baker
+    'bakerid': 'dev1_' + str(uuid4())
 }
 
-if 'TEZOSBAKERID' in environ: # CRITICAL that different baker machines have different IDs
-    info('envar TEZOSBAKERID detected: ' + environ['TEZOSBAKERID'])
-else:
-    print('envar TEZOSBAKERID not set!  exiting!')
-    info('envar TEZOSBAKERID not set!  exiting!')
-    sys.exit(1)
+# If you ever change the keys or secret info from the KV, then you must restart this entire python
 
-info('Fetching keys\' data from CloudHSM')
-kvclient = KeyVaultClient(MSIAuthentication(resource='https://vault.azure.net'))
+info('Fetching secrets')
 kvurl = 'https://' + config['kv_name_domain'] + '.vault.azure.net'
+kvclient = KeyVaultClient(MSIAuthentication(resource='https://vault.azure.net'))
+config['cosmos_key'] = kvclient.get_secret(kvurl, config['kvsecretname'], '').value
+
+info('Fetching keys\' name/x/y data')
+config['cosmos_key'] = kvclient.get_secret(kvurl, config['kvsecretname'], '').value
 keys = kvclient.get_keys(kvurl)
 for key in keys:
     keyname = key.kid.split('/')
@@ -58,7 +58,7 @@ for key in keys:
     public_key = bin_to_b58check(parity + keydat.x, magicbyte=P2PK_MAGIC)
     genhash = blake2b(parity + keydat.x, digest_size=20).digest()
     pkhash = bin_to_b58check(genhash, magicbyte=P2HASH_MAGIC)
-    config['keys'].update({pkhash:{'kv_keyname':keyname[-1],'public_key':public_key}})
+    config['keys'].update({pkhash:{'kv_keyname':keyname[-1], 'public_key':public_key}})
     info('retrieved key info: kevault keyname: ' + keyname[-1] + ' pkhash: ' + pkhash + ' - public_key: ' + public_key)
 
 @app.route('/keys/<key_hash>', methods=['POST'])
