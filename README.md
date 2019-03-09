@@ -27,9 +27,8 @@ pip install -r requirements.txt
 ```
 
 ## Configure settings in the signer.py script
-```
-Python dict called 'config' at top of signer.py has a number of variables to be set.
-```
+Python dict called 'config' at top of signer.py has a number of variables to be set regarding the Cosmos/Keyvault
+
 ## Execution
 ```
 FLASK_APP=signer flask run
