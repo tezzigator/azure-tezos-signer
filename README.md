@@ -3,15 +3,12 @@ This is a Python app that receives remote-signer protocol formatted messages fro
 
 ## Azure Elements
 * VM running the tezos code, configured with a system-managed identity
-* CosmosDB account/database SET ITS CONSISTENCY MODEL TO 'STRONG'
-Create a SQL-collection; use '/optype' as the partition key (no quotes), use '/blocklevel' as the unique key (no quotes).
-* Keyvault with HSM-backed P256 key, and with a secret containing the CosmosDB account's access/pass key.
-Configure the HSM key to be able to be accessed by the VM's system-managed identity
-Configure the HSM's firewall to only be accessed by the VM's IP
+* CosmosDB account/database SET ITS CONSISTENCY MODEL TO 'STRONG'. Create a SQL-collection; use '/optype' as the partition key (no quotes), use '/blocklevel' as the unique key (no quotes).
+* Keyvault with HSM-backed P256 key, and with a secret containing the CosmosDB account's access/pass key.  Configure the HSM key to be able to be accessed by the VM's system-managed identity.  Configure the HSM's firewall to only be accessed by the VM's IP.
 
 ## DOUBLE BAKING WARNING
-MUST follow the rules above in 'Azure Elements' on the DB's settings
-'Beta' only feature - true high availabiltity where 2 tezos baking nodes can be run at same time with same Azure Cloud HSM signing key
+* MUST follow the rules above in 'Azure Elements' on the DB's settings
+* 'Beta' only feature - true high availabiltity where 2 tezos baking nodes can be run at same time with same Azure Cloud HSM signing key
 
 ## Security Notes
 This returns the signature for valid payloads, after performing some checks:
