@@ -74,9 +74,10 @@ def sign(key_hash):
             kvclient = KeyVaultClient(MSIAuthentication(resource='https://vault.azure.net'))
             info('Calling remote-signer method {}'.format(data))
             p2sig = RemoteSigner(kvclient, key['kv_keyname'], config, data).sign()
-            response = jsonify({
-                'signature': p2sig
-            })
+            if p2sig == 'p2sig':
+                response = Response('Conflict - Already Baked', status=409)
+            else:
+                response = jsonify({'signature': p2sig})
             info('Response is {}'.format(response))
         else:
             warning("Couldn't find key {}".format(key_hash))
@@ -90,8 +91,7 @@ def sign(key_hash):
             mimetype='application/json'
         )
     info('Returning flask response {}'.format(response))
-    if p2sig == 'p2sig':
-        response = Response('Conflict - Already Baked', status=409)
+
 
     return response
 

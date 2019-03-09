@@ -114,12 +114,11 @@ class RemoteSigner:
                             bakerrows = dbclient.QueryItems(container['_self'], query, {'maxItemCount': 1, 'enableCrossPartitionQuery': False, 'consistencyLevel': 'Strong'})
                             for bakerrow in iter(bakerrows):
                                 if bakerrow['baker'] != self.config['bakerid']:
-                                    error('Another baker baked first')
-                                    raise Exception('Another baker baked first')
+                                    error('SHOULD BE IMPOSSIBLE WITH STRONG CONSISTENCY!  OUR WRITE SUCCEEDED BUT THEN OUR READ VERIFICATION RETURNED BAKERID DATA WE DID NOT WRITE')
+                                    raise Exception('Strong Consistency Violation!')
                     except:
-                        error('Error - CosmosDB issue, a HSM issue.')
+                        error('Error - Either another baker baked first, or possibly CosmosDB/HSM issue.')
                         encoded_sig = 'p2sig'
-
                 else:
                     error('Invalid level')
                     raise Exception('Invalid level')
