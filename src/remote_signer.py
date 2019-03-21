@@ -14,6 +14,7 @@ from src.tezos_rpc_client import TezosRPCClient
 from binascii import unhexlify
 from hashlib import blake2b, sha256
 from base58check import b58encode
+from base64 import urlsafe_b64decode
 from logging import info, error
 import azure.cosmos.cosmos_client as cosmos_client
 
@@ -78,7 +79,7 @@ class RemoteSigner:
     @staticmethod
     def b58encode_signature(sig):
         #return bin_to_b58check(sig, magicbyte=RemoteSigner.P256_SIGNATURE)
-        blake2bhash = blake2b(sig, digest_size=32).digest()
+        blake2bhash = blake2b(urlsafe_b64decode(sig), digest_size=32).digest()
         shabytes = sha256(sha256(RemoteSigner.P256_SIGNATURE + blake2bhash).digest()).digest()[:4]
         return b58encode(RemoteSigner.P256_SIGNATURE + blake2bhash + shabytes).decode()
 
@@ -104,11 +105,10 @@ class RemoteSigner:
                             dbclient = cosmos_client.CosmosClient(url_connection=self.config['cosmos_host'], auth={'masterKey': self.config['cosmos_key']}, consistency_level='Strong')
                             collection_link = 'dbs/' + self.config['cosmos_db'] + ('/colls/' + self.config['cosmos_collection']).format(id)
                             container = dbclient.ReadContainer(collection_link)
-                            itemtype = ''
+                            itemtype = 'endorse'
                             if self.is_block():
                                 itemtype = 'block'
-                            else:
-                                itemtype = 'endorse'
+
                             # CRITICAL  "/itemtype" VERBATIM should be set as partition key in the CosmosDB SQL table, as we will have 2 partitions: /block and /endorse, and the unique key is "/blocklevel"
                             dbclient.CreateItem(container['_self'], {'id': itemtype + str(blocklevel), 'itemtype': itemtype, 'blocklevel': blocklevel, 'baker': self.config['bakerid'], 'sig': encoded_sig})
 
