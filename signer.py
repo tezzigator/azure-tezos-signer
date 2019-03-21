@@ -8,19 +8,18 @@
 # of Blockscale, I just adapted it for MS Azure CloudHSM
 ###########################################################
 
-from struct import unpack
 from flask import Flask, request, Response, json, jsonify
 from src.remote_signer import RemoteSigner
 from logging import warning, info, basicConfig, INFO, error
 from azure.keyvault import KeyVaultClient
 from msrestazure.azure_active_directory import MSIAuthentication
-from hashlib import blake2b
-from bitcoin import bin_to_b58check
+from hashlib import blake2b, sha256
+from base58check import b58encode
 from uuid import uuid4
 import socket
 
-P2PK_MAGIC = unpack('>L', b'\x03\xb2\x8b\x7f')[0]
-P2HASH_MAGIC = unpack('>L', b'\x00\x06\xa1\xa4')[0]
+P2PK_MAGIC = bytes.fromhex('03b28b7f') #unpack('>L', b'\x03\xb2\x8b\x7f')[0]
+P2HASH_MAGIC = bytes.fromhex('06a1a4') #unpack('>L', b'\x00\x06\xa1\xa4')[0]
 
 basicConfig(filename='./remote-signer.log', format='%(asctime)s %(message)s', level=INFO)
 
@@ -56,9 +55,15 @@ for key in keys:
     if int.from_bytes(keydat.y, 'big') % 2 == 1:
         parity = bytes([3])
 
-    public_key = bin_to_b58check(parity + keydat.x, magicbyte=P2PK_MAGIC)
-    genhash = blake2b(parity + keydat.x, digest_size=20).digest()
-    pkhash = bin_to_b58check(genhash, magicbyte=P2HASH_MAGIC)
+    #public_key = bin_to_b58check(parity + keydat.x, magicbyte=P2PK_MAGIC)
+    blake2bhash = blake2b(P2PK_MAGIC + parity + keydat.x, digest_size=32).digest()
+    shabytes = sha256(sha256(P2PK_MAGIC + blake2bhash).digest()).digest()[:4]
+    public_key = b58encode(P2PK_MAGIC + blake2bhash + shabytes).decode()
+
+    blake2bhash = blake2b(parity + keydat.x, digest_size=20).digest()
+    shabytes = sha256(sha256(P2HASH_MAGIC + blake2bhash).digest()).digest()[:4]
+    pkhash = b58encode(P2HASH_MAGIC + blake2bhash + shabytes).decode()
+    #pkhash = bin_to_b58check(genhash, magicbyte=P2HASH_MAGIC)
     config['keys'].update({pkhash:{'kv_keyname':keyname[-1], 'public_key':public_key}})
     info('retrieved key info: kevault keyname: ' + keyname[-1] + ' pkhash: ' + pkhash + ' - public_key: ' + public_key)
 

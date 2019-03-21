@@ -12,8 +12,8 @@ from struct import unpack
 from string import hexdigits
 from src.tezos_rpc_client import TezosRPCClient
 from binascii import unhexlify
-from bitcoin import bin_to_b58check
-from hashlib import blake2b
+from hashlib import blake2b, sha256
+from base58check import b58encode
 from logging import info, error
 import azure.cosmos.cosmos_client as cosmos_client
 
@@ -23,7 +23,7 @@ class RemoteSigner:
     GENERIC_PREAMBLE = 3
     LEVEL_THRESHOLD: int = 120
     TEST_SIGNATURE = 'p2sigfqcE4b3NZwfmcoePgdFCvDgvUNa6DBp9h7SZ7wUE92cG3hQC76gfvistHBkFidj1Ymsi1ZcrNHrpEjPXQoQybAv6rRxke'
-    P256_SIGNATURE = unpack('>L', b'\x36\xF0\x2C\x34')[0]  # results in p2sig prefix when encoded with base58
+    P256_SIGNATURE = bytes.fromhex('36f02c34') #unpack('>L', b'\x36\xF0\x2C\x34')[0]  # results in p2sig prefix when encoded with base58
 
     def __init__(self, kvclient, kv_keyname, config, payload='', rpc_stub=None):
         self.payload = payload
@@ -77,7 +77,10 @@ class RemoteSigner:
 
     @staticmethod
     def b58encode_signature(sig):
-        return bin_to_b58check(sig, magicbyte=RemoteSigner.P256_SIGNATURE)
+        #return bin_to_b58check(sig, magicbyte=RemoteSigner.P256_SIGNATURE)
+        blake2bhash = blake2b(sig, digest_size=32).digest()
+        shabytes = sha256(sha256(RemoteSigner.P256_SIGNATURE + blake2bhash).digest()).digest()[:4]
+        return b58encode(RemoteSigner.P256_SIGNATURE + blake2bhash + shabytes).decode()
 
     def sign(self, test_mode=False):
         encoded_sig = ''
