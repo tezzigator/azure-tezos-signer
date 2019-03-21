@@ -14,7 +14,7 @@ from src.tezos_rpc_client import TezosRPCClient
 from binascii import unhexlify
 from hashlib import blake2b, sha256
 from base58check import b58encode
-from base64 import urlsafe_b64decode
+from base64 import urlsafe_b64encode
 from logging import info, error
 import azure.cosmos.cosmos_client as cosmos_client
 
@@ -79,9 +79,8 @@ class RemoteSigner:
     @staticmethod
     def b58encode_signature(sig):
         #return bin_to_b58check(sig, magicbyte=RemoteSigner.P256_SIGNATURE)
-        blake2bhash = blake2b(urlsafe_b64decode(sig), digest_size=32).digest()
-        shabytes = sha256(sha256(RemoteSigner.P256_SIGNATURE + blake2bhash).digest()).digest()[:4]
-        return b58encode(RemoteSigner.P256_SIGNATURE + blake2bhash + shabytes).decode()
+        shabytes = sha256(sha256(RemoteSigner.P256_SIGNATURE + sig).digest()).digest()[:4]
+        return b58encode(RemoteSigner.P256_SIGNATURE + sig + shabytes).decode()
 
     def sign(self, test_mode=False):
         encoded_sig = ''
