@@ -56,9 +56,9 @@ for key in keys:
         parity = bytes([3])
 
     #public_key = bin_to_b58check(parity + keydat.x, magicbyte=P2PK_MAGIC)
-    blake2bhash = blake2b(P2PK_MAGIC + parity + keydat.x, digest_size=32).digest()
-    shabytes = sha256(sha256(P2PK_MAGIC + blake2bhash).digest()).digest()[:4]
-    public_key = b58encode(P2PK_MAGIC + blake2bhash + shabytes).decode()
+    #blake2bhash = blake2b(P2PK_MAGIC + parity + keydat.x, digest_size=32).digest()
+    shabytes = sha256(sha256(P2PK_MAGIC + parity + keydat.x).digest()).digest()[:4]
+    public_key = b58encode(P2PK_MAGIC + parity + keydat.x + shabytes).decode()
 
     blake2bhash = blake2b(parity + keydat.x, digest_size=20).digest()
     shabytes = sha256(sha256(P2HASH_MAGIC + blake2bhash).digest()).digest()[:4]
