@@ -4,8 +4,9 @@
 # Written by Bo Byrd bo@tezzigator.com
 # Copyright (c) 2019 Tezzigator LLC
 # released under the MIT license
-# most of this was actually written by Carl/Luke Youngblood
-# of Blockscale, I just adapted it for MS Azure CloudHSM
+# most of this was written by Carl/Luke Youngblood
+# of Blockscale, for the AWS HSM signer
+# I adapted it for MS Azure CloudHSM
 ###########################################################
 
 from flask import Flask, request, Response, json, jsonify
@@ -40,7 +41,6 @@ for key in keys:
     parity = bytes([2])
     if int.from_bytes(keydat.y, 'big') % 2 == 1:
         parity = bytes([3])
-
     shabytes = sha256(sha256(P2PK_MAGIC + parity + keydat.x).digest()).digest()[:4]
     public_key = b58encode(P2PK_MAGIC + parity + keydat.x + shabytes).decode()
     blake2bhash = blake2b(parity + keydat.x, digest_size=20).digest()
@@ -50,6 +50,7 @@ for key in keys:
     config['keys'].update({pkhash:{'kv_keyname':keyname[-1], 'public_key':public_key}})
     info('retrieved key info: kevault keyname: ' + keyname[-1] + ' pkhash: ' + pkhash + ' - public_key: ' + public_key)
 
+    
 @app.route('/keys/<key_hash>', methods=['POST'])
 def sign(key_hash):
     p2sig=''
