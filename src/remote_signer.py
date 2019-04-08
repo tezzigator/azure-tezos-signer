@@ -90,16 +90,17 @@ class RemoteSigner:
             info('Block format is valid')
             if not self.is_generic() or self.is_generic():  # to restrict transactions, just remove the or part
                 info('Preamble is valid.  level is ' + str(blocklevel))
-                if  self.is_within_level_threshold():
-                    info('The request is witin level threshold.. getting signature')
-                    op = blake2b(unhexlify(self.payload), digest_size=32).digest()
-                    kvurl = 'https://' + self.config['kv_name_domain'] + '.vault.azure.net'
-                    sig = self.kvclient.sign(kvurl, self.kv_keyname, '', 'ES256', op).result
-                    encoded_sig = RemoteSigner.b58encode_signature(sig)
-                    info('Base58-encoded signature: {}'.format(encoded_sig))
-                else:
-                    error('Invalid level')
-                    raise Exception('Invalid level')
+                if self.is_endorsement() or self.is_block:
+                    if  self.is_within_level_threshold():
+                        info('The request is witin level threshold.. getting signature')                    
+                    else:
+                        error('Invalid level')
+                        raise Exception('Invalid level')
+                op = blake2b(unhexlify(self.payload), digest_size=32).digest()
+                kvurl = 'https://' + self.config['kv_name_domain'] + '.vault.azure.net'
+                sig = self.kvclient.sign(kvurl, self.kv_keyname, '', 'ES256', op).result
+                encoded_sig = RemoteSigner.b58encode_signature(sig)
+                info('Base58-encoded signature: {}'.format(encoded_sig))
             else:
                 error('Invalid preamble')
                 raise Exception('Invalid preamble')
