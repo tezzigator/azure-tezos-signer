@@ -33,6 +33,7 @@ config = {
     'bakerid': socket.getfqdn() + '_' + str(uuid4())
 }
 
+kvclient = KeyVaultClient(MSIAuthentication(resource='https://vault.azure.net'))
 keys = kvclient.get_keys(kvurl)
 for key in keys:
     keyname = key.kid.split('/')
