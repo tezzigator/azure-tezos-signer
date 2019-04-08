@@ -32,7 +32,8 @@ config = {
     'keys': {},  # to be auto-populated
     'bakerid': socket.getfqdn() + '_' + str(uuid4())
 }
-
+info("Getting public keys from HSM")
+kvurl = 'https://' + config['kv_name_domain'] + '.vault.azure.net'
 kvclient = KeyVaultClient(MSIAuthentication(resource='https://vault.azure.net'))
 keys = kvclient.get_keys(kvurl)
 for key in keys:
