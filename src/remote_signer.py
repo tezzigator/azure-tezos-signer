@@ -84,7 +84,8 @@ class RemoteSigner:
 
     def sign(self, test_mode=False):
         encoded_sig = ''
-        blocklevel = self.get_block_level()
+        if self.is_endorsement() or self.is_block(): blocklevel = self.get_block_level()
+        else: blocklevel = 'N/A'
         info('sign() function in remote_signer now has its data to sign')
         if self.valid_block_format(self.payload):
             info('Block format is valid')
