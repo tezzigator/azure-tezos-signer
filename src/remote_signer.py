@@ -90,7 +90,7 @@ class RemoteSigner:
             info('Block format is valid')
             if not self.is_generic() or self.is_generic():  # to restrict transactions, just remove the or part
                 info('Preamble is valid.  level is ' + str(blocklevel))
-                if self.is_endorsement() or self.is_block:
+                if self.is_endorsement() or self.is_block():
                     if  self.is_within_level_threshold():
                         info('The request is witin level threshold.. getting signature')                    
                     else:
