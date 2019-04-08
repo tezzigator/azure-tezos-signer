@@ -29,23 +29,9 @@ config = {
     'kv_name_domain': 'tezzigator',  # this name to be used for the vault domain
     'node_addr': 'http://127.0.0.1:8732',
     'keys': {},  # to be auto-populated
-    'cosmos_host': 'https://tezzigator.documents.azure.com:443/',
-    'kvsecretname': 'cloudnosql',  # the name of the KV secret that stores the CosmosDB passkey
-    'cosmos_key': '',  # to be auto-populated
-    'cosmos_db': 'tezzigator',
-    'cosmos_collection': 'signeditems',
     'bakerid': socket.getfqdn() + '_' + str(uuid4())
 }
 
-# If you ever change the keys or secret info from the KV, then you must restart this entire python
-
-info('Fetching secrets')
-kvurl = 'https://' + config['kv_name_domain'] + '.vault.azure.net'
-kvclient = KeyVaultClient(MSIAuthentication(resource='https://vault.azure.net'))
-config['cosmos_key'] = kvclient.get_secret(kvurl, config['kvsecretname'], '').value
-
-info('Fetching keys\' name/x/y data')
-config['cosmos_key'] = kvclient.get_secret(kvurl, config['kvsecretname'], '').value
 keys = kvclient.get_keys(kvurl)
 for key in keys:
     keyname = key.kid.split('/')
@@ -55,15 +41,12 @@ for key in keys:
     if int.from_bytes(keydat.y, 'big') % 2 == 1:
         parity = bytes([3])
 
-    #public_key = bin_to_b58check(parity + keydat.x, magicbyte=P2PK_MAGIC)
-    #blake2bhash = blake2b(P2PK_MAGIC + parity + keydat.x, digest_size=32).digest()
     shabytes = sha256(sha256(P2PK_MAGIC + parity + keydat.x).digest()).digest()[:4]
     public_key = b58encode(P2PK_MAGIC + parity + keydat.x + shabytes).decode()
-
     blake2bhash = blake2b(parity + keydat.x, digest_size=20).digest()
     shabytes = sha256(sha256(P2HASH_MAGIC + blake2bhash).digest()).digest()[:4]
     pkhash = b58encode(P2HASH_MAGIC + blake2bhash + shabytes).decode()
-    #pkhash = bin_to_b58check(genhash, magicbyte=P2HASH_MAGIC)
+
     config['keys'].update({pkhash:{'kv_keyname':keyname[-1], 'public_key':public_key}})
     info('retrieved key info: kevault keyname: ' + keyname[-1] + ' pkhash: ' + pkhash + ' - public_key: ' + public_key)
 
@@ -79,10 +62,7 @@ def sign(key_hash):
             kvclient = KeyVaultClient(MSIAuthentication(resource='https://vault.azure.net'))
             info('Calling remote-signer method {}'.format(data))
             p2sig = RemoteSigner(kvclient, key['kv_keyname'], config, data).sign()
-            if p2sig == 'p2sig':
-                response = Response('Conflict - Already Baked', status=409)
-            else:
-                response = jsonify({'signature': p2sig})
+            response = jsonify({'signature': p2sig})
             info('Response is {}'.format(response))
         else:
             warning("Couldn't find key {}".format(key_hash))
@@ -96,8 +76,6 @@ def sign(key_hash):
             mimetype='application/json'
         )
     info('Returning flask response {}'.format(response))
-
-
     return response
 
 
