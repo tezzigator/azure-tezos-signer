@@ -5,7 +5,8 @@
 # Copyright (c) 2019 Tezzigator LLC
 # released under the MIT license
 # most of this was actually written by Carl/Luke Youngblood
-# of Blockscale, I just adapted it for MS Azure CloudHSM
+# of Blockscale for the AWS Cloud HSM
+# I adapted this for MS Azure CloudHSM
 ###########################################################
 
 from struct import unpack
@@ -16,7 +17,6 @@ from hashlib import blake2b, sha256
 from base58check import b58encode
 from base64 import urlsafe_b64encode
 from logging import info, error
-import azure.cosmos.cosmos_client as cosmos_client
 
 class RemoteSigner:
     BLOCK_PREAMBLE = 1
@@ -90,37 +90,13 @@ class RemoteSigner:
             info('Block format is valid')
             if not self.is_generic() or self.is_generic():  # to restrict transactions, just remove the or part
                 info('Preamble is valid.  level is ' + str(blocklevel))
-                if ((self.is_block() or self.is_endorsement()) and self.is_within_level_threshold()) or (not self.is_block() and not self.is_endorsement()):
-                    info('The request is valid.. getting signature')
-                    try:
-                        op = blake2b(unhexlify(self.payload), digest_size=32).digest()
-                        kvurl = 'https://' + self.config['kv_name_domain'] + '.vault.azure.net'
-                        sig = self.kvclient.sign(kvurl, self.kv_keyname, '', 'ES256', op).result
-                        encoded_sig = RemoteSigner.b58encode_signature(sig)
-                        info('Base58-encoded signature: {}'.format(encoded_sig) + ' writing DB row if bake or endorse')
-
-                        if self.is_block() or self.is_endorsement():
-                            #first write the db table
-                            dbclient = cosmos_client.CosmosClient(url_connection=self.config['cosmos_host'], auth={'masterKey': self.config['cosmos_key']}, consistency_level='Strong')
-                            collection_link = 'dbs/' + self.config['cosmos_db'] + ('/colls/' + self.config['cosmos_collection']).format(id)
-                            container = dbclient.ReadContainer(collection_link)
-                            itemtype = 'endorse'
-                            if self.is_block():
-                                itemtype = 'block'
-
-                            # CRITICAL  "/itemtype" VERBATIM should be set as partition key in the CosmosDB SQL table, as we will have 2 partitions: /block and /endorse, and the unique key is "/blocklevel"
-                            dbclient.CreateItem(container['_self'], {'id': itemtype + str(blocklevel), 'itemtype': itemtype, 'blocklevel': blocklevel, 'baker': self.config['bakerid'], 'sig': encoded_sig})
-
-                            # now read the table to check to prevent double
-                            query = {'query': 'select c.baker from c where c.itemtype = \'' + itemtype + '\' and c.blocklevel = ' + str(blocklevel)}
-                            bakerrows = dbclient.QueryItems(container['_self'], query, {'maxItemCount': 1, 'enableCrossPartitionQuery': False, 'consistencyLevel': 'Strong'})
-                            for bakerrow in iter(bakerrows):
-                                if bakerrow['baker'] != self.config['bakerid']:
-                                    error('SHOULD BE IMPOSSIBLE WITH STRONG CONSISTENCY!  OUR WRITE SUCCEEDED BUT THEN OUR READ VERIFICATION RETURNED BAKERID DATA WE DID NOT WRITE')
-                                    raise Exception('Strong Consistency Violation!')
-                    except:
-                        error('Error - Either another baker baked first, or possibly CosmosDB/HSM issue.')
-                        encoded_sig = 'p2sig'
+                if  self.is_within_level_threshold():
+                    info('The request is witin level threshold.. getting signature')
+                    op = blake2b(unhexlify(self.payload), digest_size=32).digest()
+                    kvurl = 'https://' + self.config['kv_name_domain'] + '.vault.azure.net'
+                    sig = self.kvclient.sign(kvurl, self.kv_keyname, '', 'ES256', op).result
+                    encoded_sig = RemoteSigner.b58encode_signature(sig)
+                    info('Base58-encoded signature: {}'.format(encoded_sig))
                 else:
                     error('Invalid level')
                     raise Exception('Invalid level')
