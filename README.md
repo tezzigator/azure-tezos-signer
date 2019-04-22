@@ -11,7 +11,7 @@ This is a Python app that receives remote-signer protocol formatted messages fro
 This returns the signature for valid payloads, after performing some checks:
 * Is the message a valid payload?
 * Is the message within a certain threshold of the head of the chain? Ensures you are signing valid blocks.
-* THIS CODE WILL ALLOW HSM TO SIGN TRANSACTIONS.  This can easily be restricted.
+* Remote hosts can only sign blocks/endorsements.  Localhost (127.0.0.1) can sign anything.
 
 ## Installation
 ```
