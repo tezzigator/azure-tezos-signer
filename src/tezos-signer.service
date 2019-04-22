@@ -1,0 +1,20 @@
+# great tool here by etomknudsen - https://github.com/etomknudsen/tezos-baking
+# only installed on the signer VM, not necessarily on the tezos node/client VM
+
+# this file goes into /etc/systemd/system/tezos-signer.service
+# sudo systemctl enable tezos-signer.service
+# sudo systemctl start tezos-signer.service
+# sudo systemctl status tezos-signer.service
+
+[Unit]
+Description=Tezos remote Azure HSM signer
+After=network.target
+
+[Service]
+User=<YOURUSER>
+WorkingDirectory=/home/<YOURUSER>/azurehsm-signer
+ExecStart=/usr/bin/python3 /home/<YOURUSER>/azurehsm-signer/signer.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
