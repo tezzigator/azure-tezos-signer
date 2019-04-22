@@ -1,4 +1,4 @@
-# great tool here by etomknudsen - https://github.com/etomknudsen/tezos-baking
+# great tool here to run automatically on reboot by systemd  - by community user etomknudsen - https://github.com/etomknudsen/tezos-baking
 # only installed on the signer VM, not necessarily on the tezos node/client VM
 
 # this file goes into /etc/systemd/system/tezos-signer.service
