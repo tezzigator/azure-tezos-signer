@@ -27,7 +27,7 @@ basicConfig(filename='./remote-signer.log', format='%(asctime)s %(message)s', le
 app = Flask(__name__)
 
 config = {
-    'kv_name_domain': 'tezzigator',  # this name to be used for the vault domain
+    'kv_name_domain': 'kvhsmsigner',  # this name to be used for the vault domain
     'node_addr': 'http://127.0.0.1:8732',
     'keys': {},  # to be auto-populated
     'bakerid': socket.getfqdn() + '_' + str(uuid4())
@@ -64,7 +64,7 @@ def sign(key_hash):
             key = config['keys'][key_hash]
             kvclient = KeyVaultClient(MSIAuthentication(resource='https://vault.azure.net'))
             info('Calling remote-signer method {}'.format(data))
-            p2sig = RemoteSigner(kvclient, key['kv_keyname'], config, data).sign()
+            p2sig = RemoteSigner(kvclient, key['kv_keyname'], config, request.environ['REMOTE_ADDR'], data).sign()
             response = jsonify({'signature': p2sig})
             info('Response is {}'.format(response))
         else:
@@ -116,4 +116,4 @@ def authorized_keys():
     )
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5001, debug=False)
+    app.run(host='0.0.0.0', port=5001, debug=False)

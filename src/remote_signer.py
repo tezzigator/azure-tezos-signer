@@ -26,7 +26,7 @@ class RemoteSigner:
     TEST_SIGNATURE = 'p2sigfqcE4b3NZwfmcoePgdFCvDgvUNa6DBp9h7SZ7wUE92cG3hQC76gfvistHBkFidj1Ymsi1ZcrNHrpEjPXQoQybAv6rRxke'
     P256_SIGNATURE = bytes.fromhex('36f02c34') #unpack('>L', b'\x36\xF0\x2C\x34')[0]  # results in p2sig prefix when encoded with base58
 
-    def __init__(self, kvclient, kv_keyname, config, payload='', rpc_stub=None):
+    def __init__(self, kvclient, kv_keyname, config, clientip, payload='', rpc_stub=None):
         self.payload = payload
         info('Verifying payload')
         self.data = self.decode_block(self.payload)
@@ -35,6 +35,7 @@ class RemoteSigner:
         self.kvclient = kvclient
         self.kv_keyname = kv_keyname
         self.config = config
+        self.remoteip = clientip
 
     @staticmethod
     def valid_block_format(blockdata):
@@ -89,7 +90,7 @@ class RemoteSigner:
         info('sign() function in remote_signer now has its data to sign')
         if self.valid_block_format(self.payload):
             info('Block format is valid')
-            if not self.is_generic() or self.is_generic():  # to restrict transactions, just remove the or part
+            if not self.is_generic() or (self.remoteip == '127.0.0.1' and self.is_generic()):# or self.is_generic():  # to restrict transactions, just remove the or part
                 info('Preamble is valid.  level is ' + str(blocklevel))
                 if self.is_endorsement() or self.is_block():
                     if  self.is_within_level_threshold():
