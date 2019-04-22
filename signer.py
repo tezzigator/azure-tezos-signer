@@ -27,7 +27,7 @@ basicConfig(filename='./remote-signer.log', format='%(asctime)s %(message)s', le
 app = Flask(__name__)
 
 config = {
-    'kv_name_domain': 'kvhsmsigner',  # this name to be used for the vault domain
+    'kv_name_domain': 'testhostname',  # this name to be used for the vault domain
     'node_addr': 'http://127.0.0.1:8732',
     'keys': {},  # to be auto-populated
     'bakerid': socket.getfqdn() + '_' + str(uuid4())
