@@ -4,7 +4,10 @@ This is a Python app that receives remote-signer protocol formatted messages fro
 
 ## Azure Elements
 * Ubuntu 18.04 VM (python3 v 3.6.7) running the tezos code, configured with a system-managed identity
-* Keyvault with HSM-backed P256 key; configure access policies for key to be able to be accessed by the VM's system-managed identity.  Configure firewalls for key/secret to only be accessed by the VM's IP.
+* Keyvault with HSM-backed P256 key(s)
+* Configure access policies for key to be able to be accessed by the VM's system-managed identity.
+* Configure firewalls for key/secret to only be accessed by the VM's IP.
+* Only EC signing keys should be present in this particular vault.
 
 
 ## Security Notes
