@@ -26,7 +26,7 @@ pip install -r requirements.txt
 ```
 
 ## Configure settings in the signer.py script
-Python dict called 'config' at top of signer.py has a number of variables to be set regarding the Cosmos/Keyvault
+Python dict called 'config' at top of signer.py  - set the short hostname of your keyvault here (not full FQDN)
 
 ## Execution
 ```
