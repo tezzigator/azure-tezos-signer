@@ -7,7 +7,7 @@ This is a Python app that receives remote-signer protocol formatted messages fro
 * Keyvault with HSM-backed P256 key(s)
 * Configure access policies for key to be able to be accessed by the VM's system-managed identity.
 * Configure firewalls for key/secret to only be accessed by the VM's IP.
-* Only EC signing keys should be present in this particular vault.
+* Only EC signing keys should be present in this particular vault, any other keys will cause failures.
 
 
 ## Security Notes
