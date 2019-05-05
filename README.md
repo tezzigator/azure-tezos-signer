@@ -2,7 +2,7 @@
 This is a Python app that receives remote-signer protocol formatted messages from the Tezos baking client and passes them on to an MS Azure CloudHSM to be signed.  This script will autodetect all signing keys in your keyvault's HSM and will allow for signing from clients by all keys.
 
 
-## Google Cloud Elements
+## Azure Elements
 * Ubuntu 18.04 VM (python3 v 3.6.7) running the tezos code, configured with a system-managed identity
 * Keyvault with HSM-backed P256 key(s)
 * Configure access policies for key to be able to be accessed by the VM's system-managed identity.
