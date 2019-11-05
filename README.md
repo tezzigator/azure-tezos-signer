@@ -21,8 +21,8 @@ TEZOS_SIGNER_HTTP_HEADERS=x-functions-key: <default host key>
 
 ## Installation
 * Create function in the portal; configure function env variables in the `Application Settings` section of fucntion.
-*KVURL: URL of your keyvault; use https:// then put full FQDN but leave off trailing '/' character
-*KEYNAME: the key name in the keyvault
-*TEZOS_PKHASH: tz....
-*TEZOS_PUBLICKEY: p2pk, etc
-* Push directly from VSCode
+* KVURL: URL of your keyvault; use https:// then put full FQDN but leave off trailing '/' character
+* KEYNAME: the key name in the keyvault
+* TEZOS_PKHASH: tz....
+* TEZOS_PUBLICKEY: p2pk, etc
+* Push directly from VSCode to your function app
