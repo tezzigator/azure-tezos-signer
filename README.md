@@ -13,7 +13,7 @@ We depend on the local baker's high water marking files for doubles prevention.
 * Function App created with "function" level security; this is only 1 of multiple layers of security.
 
 ## Security Notes
-* Configure access policies for keyvault to be able to be accessed by the function's managed identity for list & sign.
+* Configure access policies for keyvault to only be able to be accessed by the function's managed identity for list & sign.
 * Configure function firewall to only allow your baker VNet/subnet/IP.
 * Use private service endpoint for the function in your baker subnet
 * Use the `default` host key from 'Function app settings' in the tezos-client's ENV VAR:
