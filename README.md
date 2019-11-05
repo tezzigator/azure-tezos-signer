@@ -20,9 +20,13 @@ We depend on the local baker's high water marking files for doubles prevention.
 TEZOS_SIGNER_HTTP_HEADERS=x-functions-key: <default host key>
 
 ## Installation
-* Create function in the portal; configure function env variables in the `Application Settings` section of fucntion.
+* Create function in the portal; configure function env variables in the `Application Settings` section of function.
 * KVURL: URL of your keyvault; use https:// then put full FQDN but leave off trailing '/' character
-* KEYNAME: the key name in the keyvault
-* TEZOS_PKHASH: tz....
-* TEZOS_PUBLICKEY: p2pk, etc
+* KEYNAME: the key name in the keyvault - at first use any valid/invalid data.
+* TEZOS_PKHASH: tz3...  - at first use any valid/invalid data.
+* TEZOS_PUBLICKEY: p2pk...  - at first use any valid/invalid data.
+
+## First Run
 * Push directly from VSCode to your function app
+* From the baker curl to your function with the `/keys` route to get details of all signing keys in your vault
+* From the list of keys, select one to use to update the function ENV VARs (KEYNAME, PKHASH, PUBLICKEY), and restart the function.
