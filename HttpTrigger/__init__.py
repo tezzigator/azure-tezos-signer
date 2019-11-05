@@ -12,7 +12,6 @@ from struct import unpack
 from string import hexdigits
 from binascii import unhexlify, hexlify
 from hashlib import blake2b, sha256
-from base58check import b58encode
 from base64 import urlsafe_b64encode
 
 KVURL = environ["KVHOSTNAME"]  # for the ENV VAR, prepend the https:// then put full FQDN but leave off trailing '/' character
