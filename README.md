@@ -1,4 +1,4 @@
-# Tezos Remote Signer
+# Serverless Tezos Remote Signer
 An Azure function app that uses keys in an HSM keyvault to sign block and endorsements.
 It emulates behavior by the `tezos-signer` binary, except does not support authorized_keys authentication.
 This branch only allows to sign blocks or endorsements, use the branch serverless-transactions to allow all.
