@@ -14,8 +14,8 @@ from binascii import unhexlify, hexlify
 from hashlib import blake2b, sha256
 from base64 import urlsafe_b64encode
 
-KVURL = environ["KVHOSTNAME"]  # for the ENV VAR, prepend the https:// then put full FQDN but leave off trailing '/' character
-KEYNAME = environ['KVKEYNAME'] # this ENV VAR should be the key name in the keyvault
+KVURL = 'https://' + environ["KEYVAULT_FQDN"]  # this var is the HTTPS:// URL ending with just the FQDN and no trailing / character
+KEYNAME = environ['KEY_NAME'] # the key name in the keyvault
 TEZOS_PKHASH  = environ['TEZOS_PKHASH'] # tz....
 TEZOS_PUBLICKEY  = environ['TEZOS_PUBLICKEY'] # p2pk, etc
 BAKERID = gethostname()
