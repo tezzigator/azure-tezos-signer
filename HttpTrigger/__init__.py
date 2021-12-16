@@ -14,10 +14,10 @@ from binascii import unhexlify, hexlify
 from hashlib import blake2b, sha256
 from base64 import urlsafe_b64encode
 
-KVURL = 'https://' + environ["KEYVAULT_FQDN"]  # this var is the HTTPS:// URL ending with just the FQDN and no trailing / character
-KEYNAME = environ['KEY_NAME'] # the key name in the keyvault
-TEZOS_PKHASH  = environ['TEZOS_PKHASH'] # tz....
-TEZOS_PUBLICKEY  = environ['TEZOS_PUBLICKEY'] # p2pk, etc
+KVURL = 'https://' + environ["FQDN"]  # this var is the HTTPS:// URL ending with just the FQDN and no trailing / character
+KEYNAME = environ['NAME'] # the key name in the keyvault
+TEZOS_PKHASH  = environ['PKH'] # tz....
+TEZOS_PUBLICKEY  = environ['PKY'] # p2pk, etc
 BAKERID = gethostname()
 P2PK_MAGIC = bytes.fromhex('03b28b7f')
 P2HASH_MAGIC = bytes.fromhex('06a1a4')
